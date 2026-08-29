@@ -1,13 +1,26 @@
-Simulador de Evaluación Clásica de f(x)
+# Método Clásico: Evaluación de f(x)
 
-Esta herramienta web la armé en un solo archivo usando HTML, CSS y JavaScript para simular cómo se evalúa y procesa el conteo de bits en 1 sobre cadenas binarias grandes (¡hasta de 4096 bits!), además de contrastarlo con la lógica de algoritmos como Deutsch-Jozsa.
+Proyecto académico que muestra de forma interactiva cómo el método clásico evalúa una cadena de bits, contando los bits en `1` y convirtiendo el resultado a decimal.
 
-Qué puedes hacer con esto
+## Funcionalidades
 
-Elegir el tamaño: Configura cuántos bits quieres procesar y genera patrones aleatorios al instante para probar diferentes escenarios.
+* Generación de cadenas aleatorias de hasta 4096 bits.
+* Evaluación de cadenas binarias.
+* Conteo de bits en `1`.
+* Conversión a decimal.
+* Medición del tiempo de ejecución.
+* Comparación de consultas entre el método clásico y Deutsch-Jozsa.
+* Ejecución de múltiples repeticiones y visualización de resultados.
 
-Ver el proceso en acción: La interfaz te muestra visualmente el recorrido bit a bit y calcula su valor en decimal usando BigInt para evitar problemas con números gigantes.
+## Tecnologías
 
-Hacer pruebas por lotes: Puedes correr hasta 500 repeticiones seguidas con patrones distintos para ver el comportamiento estadístico y la dispersión de los resultados.
+* HTML5
+* CSS3
+* JavaScript
+* Canvas API
 
-Gráficas y métricas: Incluye gráficos hechos con el elemento canvas para comparar las consultas reales frente al peor caso clásico, junto con un historial detallado que mide los milisegundos exactos que toma cada cálculo.
+## Ejecución
+
+Abrir el archivo `index.html` en cualquier navegador web.
+
+El proyecto está desarrollado con fines educativos para comprender la diferencia entre el enfoque clásico y el algoritmo Deutsch-Jozsa.

@@ -1,4 +1,5 @@
 Simulador de Evaluación Clásica de f(x)
+
 Esta herramienta web la armé en un solo archivo usando HTML, CSS y JavaScript para simular cómo se evalúa y procesa el conteo de bits en 1 sobre cadenas binarias grandes (¡hasta de 4096 bits!), además de contrastarlo con la lógica de algoritmos como Deutsch-Jozsa.
 
 Qué puedes hacer con esto

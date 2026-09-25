@@ -15,6 +15,31 @@
     --text-muted: #888780;
     --bg-accent: #e6f1fb;
     --text-accent: #0c447c;
+    --hover: #f0eee8;
+    --grid-line: #eeece5;
+    --err: #a32d2d;
+    --bar-green: #1d9e75;
+    --bar-blue: #378add;
+    --bar-red: #e24b4a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17171a;
+      --card: #212226;
+      --border: #34353a;
+      --border-accent: #5aa4ec;
+      --text-primary: #f0efec;
+      --text-secondary: #b8b6b0;
+      --text-muted: #8b8a86;
+      --bg-accent: #1c2e42;
+      --text-accent: #7cbcf6;
+      --hover: #2a2b30;
+      --grid-line: #2c2d32;
+      --err: #ef6b6b;
+      --bar-green: #3fce9e;
+      --bar-blue: #62aaf0;
+      --bar-red: #f07b7a;
+    }
   }
   * { box-sizing: border-box; }
   body {
@@ -25,6 +50,7 @@
     margin: 0 auto;
     padding: 2rem 1.5rem 3rem;
   }
+  html { background: var(--bg); }
   h1 { font-size: 20px; font-weight: 600; margin: 0 0 0.25rem; }
   p.subtitle { font-size: 14px; color: var(--text-secondary); margin: 0 0 1.75rem; }
   .controls { display: flex; gap: 8px; align-items: center; margin: 0 0 0.6rem; flex-wrap: wrap; }
@@ -59,9 +85,9 @@
     cursor: pointer;
     white-space: nowrap;
   }
-  button:hover { background: #f0eee8; }
+  button:hover { background: var(--hover); }
   button:disabled { opacity: 0.5; cursor: default; }
-  #err { font-size: 13px; color: #a32d2d; display: none; margin: 6px 0 12px; }
+  #err { font-size: 13px; color: var(--err); display: none; margin: 6px 0 12px; }
   .bitsRow { margin: 0 0 1rem; }
   #track { display: flex; gap: 5px; margin: 0 0 1.5rem; flex-wrap: wrap; }
   .bitbox {
@@ -72,7 +98,7 @@
     color: var(--text-muted);
   }
   .bitbox.active { border-color: var(--border-accent); background: var(--bg-accent); color: var(--text-accent); font-weight: 600; }
-  .bitbox.past { background: #f0eee8; color: var(--text-secondary); }
+  .bitbox.past { background: var(--hover); color: var(--text-secondary); }
   .bitbox.ellipsis { border: none; color: var(--text-muted); width: auto; padding: 0 4px; }
   .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
   .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
@@ -91,6 +117,14 @@
   }
   #logList li span.time { color: var(--text-primary); font-weight: 600; font-family: "Courier New", monospace; }
   #logList li span.dur { color: var(--text-accent); }
+  select {
+    font-size: 14px; padding: 7px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--card); color: var(--text-primary);
+  }
+  .qstep-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 1.5rem; }
+  .qstep { font-size: 12.5px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); color: var(--text-muted); }
+  .qstep.active { border-color: var(--border-accent); background: var(--bg-accent); color: var(--text-accent); font-weight: 600; }
+  .qstep.done { color: var(--text-secondary); }
 </style>
 </head>
 <body>
@@ -205,6 +239,10 @@ function renderTrack(bits, activeIndex) {
   for (let i = bits.length - half; i < bits.length; i++) track.appendChild(makeBox(bits[i], i > activeIndex ? 'past' : (i === activeIndex ? 'active' : '')));
 }
 
+function themeColor(varName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+}
+
 function abbreviateBig(bi) {
   const s = bi.toString();
   if (s.length <= 24) return s;
@@ -299,10 +337,13 @@ function drawBarChart(actualQueries, worstCase) {
   const W = canvas.width, H = canvas.height;
   ctx.clearRect(0, 0, W, H);
 
+  const labelColor = themeColor('--text-secondary');
+  const valueColor = themeColor('--text-primary');
+
   const bars = [
-    { label: 'Deutsch-Jozsa', valueLabel: '1', logv: Math.log10(2), color: '#1d9e75' },
-    { label: 'Clásico (esta demo)', valueLabel: String(actualQueries), logv: Math.log10(actualQueries + 1), color: '#378add' },
-    { label: 'Clásico (peor caso)', valueLabel: abbreviateBig(worstCase), logv: log10BigInt(worstCase + 1n), color: '#e24b4a' }
+    { label: 'Deutsch-Jozsa', valueLabel: '1', logv: Math.log10(2), color: themeColor('--bar-green') },
+    { label: 'Clásico (esta demo)', valueLabel: String(actualQueries), logv: Math.log10(actualQueries + 1), color: themeColor('--bar-blue') },
+    { label: 'Clásico (peor caso)', valueLabel: abbreviateBig(worstCase), logv: log10BigInt(worstCase + 1n), color: themeColor('--bar-red') }
   ];
 
   const maxLog = Math.max(...bars.map(b => b.logv), 0.001);
@@ -322,7 +363,7 @@ function drawBarChart(actualQueries, worstCase) {
     const y = padTop + gap * (i + 1) + barHeight * i;
     const w = Math.max((b.logv / maxLog) * chartW, 4);
 
-    ctx.fillStyle = '#5f5e5a';
+    ctx.fillStyle = labelColor;
     ctx.textAlign = 'right';
     ctx.fillText(b.label, padLeft - 12, y + barHeight / 2);
 
@@ -338,7 +379,7 @@ function drawBarChart(actualQueries, worstCase) {
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = '#1f1e1c';
+    ctx.fillStyle = valueColor;
     ctx.textAlign = 'left';
     ctx.fillText(b.valueLabel, padLeft + w + 8, y + barHeight / 2);
   });
@@ -414,7 +455,14 @@ function drawRepChart(results, n) {
   const maxVal = n;
   const yFor = v => padTop + chartH - (v / maxVal) * chartH;
 
-  ctx.strokeStyle = '#ddd9cf';
+  const axisColor = themeColor('--border');
+  const gridColor = themeColor('--grid-line');
+  const mutedColor = themeColor('--text-muted');
+  const secondaryColor = themeColor('--text-secondary');
+  const pointColor = themeColor('--bar-blue');
+  const refColor = themeColor('--bar-red');
+
+  ctx.strokeStyle = axisColor;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(padLeft, padTop);
@@ -423,12 +471,12 @@ function drawRepChart(results, n) {
   ctx.stroke();
 
   ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
-  ctx.fillStyle = '#888780';
+  ctx.fillStyle = mutedColor;
   ctx.textAlign = 'right';
   [0, Math.round(maxVal / 2), maxVal].forEach(t => {
     const y = yFor(t);
     ctx.fillText(String(t), padLeft - 6, y + 3);
-    ctx.strokeStyle = '#eeece5';
+    ctx.strokeStyle = gridColor;
     ctx.beginPath();
     ctx.moveTo(padLeft, y);
     ctx.lineTo(padLeft + chartW, y);
@@ -441,7 +489,7 @@ function drawRepChart(results, n) {
   results.forEach((r, i) => {
     const x = padLeft + (count === 1 ? chartW / 2 : (i / (count - 1)) * chartW);
     const y = yFor(r.counter);
-    ctx.fillStyle = '#378add';
+    ctx.fillStyle = pointColor;
     ctx.beginPath();
     ctx.arc(x, y, pointRadius, 0, Math.PI * 2);
     ctx.fill();
@@ -450,18 +498,18 @@ function drawRepChart(results, n) {
   // Línea de referencia: valor esperado (n/2)
   const expected = n / 2;
   const ey = yFor(expected);
-  ctx.strokeStyle = '#e24b4a';
+  ctx.strokeStyle = refColor;
   ctx.setLineDash([4, 3]);
   ctx.beginPath();
   ctx.moveTo(padLeft, ey);
   ctx.lineTo(padLeft + chartW, ey);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = '#e24b4a';
+  ctx.fillStyle = refColor;
   ctx.textAlign = 'left';
   ctx.fillText('esperado n/2 = ' + expected.toFixed(0), padLeft + 4, ey - 5);
 
-  ctx.fillStyle = '#5f5e5a';
+  ctx.fillStyle = secondaryColor;
   ctx.textAlign = 'center';
   ctx.fillText('Repetición (1 → ' + count + ')', padLeft + chartW / 2, padTop + chartH + 20);
 }
@@ -481,6 +529,256 @@ document.getElementById('randomBtn').addEventListener('click', () => {
 // Estado inicial: cadena aleatoria de 1128 bits
 bitsInput.value = randomBitsOfLength(parseInt(nbitsInput.value, 10));
 renderTrack(bitsInput.value, bitsInput.value.length);
+</script>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:2.5rem 0 2rem;">
+
+<h1>Parte cuántica: algoritmo de Deutsch-Jozsa</h1>
+<p class="subtitle">Simulación real del circuito (vector de estado) que decide, con una sola consulta al oráculo, si f es constante o balanceada.</p>
+
+<div class="controls">
+  <label for="qbits">n (qubits)</label>
+  <input id="qbits" type="number" min="1" max="14" value="8" />
+  <label for="oracleType">Oráculo</label>
+  <select id="oracleType">
+    <option value="const0">Constante f(x) = 0</option>
+    <option value="const1">Constante f(x) = 1</option>
+    <option value="mask">Balanceada (paridad con máscara)</option>
+    <option value="random">Balanceada (aleatoria)</option>
+  </select>
+  <button id="newOracleBtn">Generar oráculo</button>
+</div>
+<div class="controls">
+  <button id="qRunBtn">Ejecutar algoritmo cuántico</button>
+</div>
+<div id="qErr" style="font-size:13px;color:var(--err);display:none;margin:6px 0 12px;">Usa entre 1 y 14 qubits.</div>
+<div id="qOracleInfo" style="font-size:13px;color:var(--text-secondary);margin:0 0 1rem;"></div>
+
+<div class="qstep-row" id="qSteps">
+  <div class="qstep" data-step="0">① Estado inicial |0…0⟩</div>
+  <div class="qstep" data-step="1">② Superposición (H⊗n)</div>
+  <div class="qstep" data-step="2">③ Oráculo Uf (fase)</div>
+  <div class="qstep" data-step="3">④ Interferencia (H⊗n)</div>
+  <div class="qstep" data-step="4">⑤ Medición</div>
+</div>
+
+<div class="stats">
+  <div class="stat-card"><p class="stat-label">Consultas realizadas</p><p class="stat-value" id="qQueries">0</p></div>
+  <div class="stat-card"><p class="stat-label">P(medir |0…0⟩)</p><p class="stat-value" id="qProbZero">-</p></div>
+  <div class="stat-card"><p class="stat-label">Resultado inferido</p><p class="stat-value" id="qResult">-</p></div>
+  <div class="stat-card"><p class="stat-label">Tiempo de cálculo</p><p class="stat-value" id="qDuration">-</p></div>
+</div>
+
+<div id="qNote"></div>
+
+<div id="qHistWrap" style="display:none;">
+  <p class="chart-title">Distribución de probabilidad al medir (por estado)</p>
+  <canvas id="qProbChart" width="660" height="190"></canvas>
+</div>
+
+<div id="qCompareWrap" style="display:none; margin-top:1.5rem;">
+  <p class="chart-title">Comparación de consultas necesarias</p>
+  <canvas id="qCompareChart" width="660" height="150"></canvas>
+</div>
+
+<script>
+(function(){
+  const qbitsInput = document.getElementById('qbits');
+  const oracleTypeSel = document.getElementById('oracleType');
+  const newOracleBtn = document.getElementById('newOracleBtn');
+  const qRunBtn = document.getElementById('qRunBtn');
+  const qErr = document.getElementById('qErr');
+  const qOracleInfo = document.getElementById('qOracleInfo');
+  const qStepsEls = document.querySelectorAll('#qSteps .qstep');
+  const qQueriesEl = document.getElementById('qQueries');
+  const qProbZeroEl = document.getElementById('qProbZero');
+  const qResultEl = document.getElementById('qResult');
+  const qDurationEl = document.getElementById('qDuration');
+  const qNoteEl = document.getElementById('qNote');
+  let qRunning = false;
+  let oracle = null;
+
+  function popcount(x){ let c=0; while(x){ c+=x&1; x=x>>>1; } return c; }
+
+  function makeOracle(type, n){
+    const N = 1<<n;
+    if (type==='const0') return {type:'const', value:0, desc:'f(x) = 0 para todo x (constante).'};
+    if (type==='const1') return {type:'const', value:1, desc:'f(x) = 1 para todo x (constante).'};
+    if (type==='mask'){
+      const mask = 1 + Math.floor(Math.random()*(N-1));
+      return {type:'mask', mask, desc:'f(x) = paridad(x AND ' + mask.toString(2).padStart(n,'0') + ')₂ — balanceada.'};
+    }
+    const table = new Uint8Array(N);
+    for (let i=0;i<N/2;i++) table[i]=1;
+    for (let i=N-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=table[i]; table[i]=table[j]; table[j]=t; }
+    return {type:'table', table, desc:'f(x) asignada al azar, exactamente mitad 0 y mitad 1, sin patrón fijo — balanceada.'};
+  }
+
+  function applyOracle(amp, n, spec){
+    const N = amp.length;
+    if (spec.type==='const'){
+      if (spec.value===1) for (let i=0;i<N;i++) amp[i] = -amp[i];
+      return;
+    }
+    if (spec.type==='mask'){
+      for (let i=0;i<N;i++) if (popcount(i & spec.mask) & 1) amp[i] = -amp[i];
+      return;
+    }
+    for (let i=0;i<N;i++) if (spec.table[i]===1) amp[i] = -amp[i];
+  }
+
+  function hadamardTransform(a){
+    const N=a.length;
+    for (let len=1; len<N; len<<=1){
+      for (let i=0;i<N;i+=len<<1){
+        for (let j=i;j<i+len;j++){
+          const x=a[j], y=a[j+len];
+          a[j]=x+y; a[j+len]=x-y;
+        }
+      }
+    }
+    const norm=1/Math.sqrt(N);
+    for (let i=0;i<N;i++) a[i]*=norm;
+  }
+
+  function regenOracle(){
+    let n = parseInt(qbitsInput.value,10);
+    if (!Number.isFinite(n)||n<1) n=1;
+    if (n>14) n=14;
+    qbitsInput.value=String(n);
+    oracle = makeOracle(oracleTypeSel.value, n);
+    qOracleInfo.textContent = oracle.desc;
+    qErr.style.display='none';
+  }
+
+  async function setStep(i){
+    qStepsEls.forEach((el,idx)=>{
+      el.classList.toggle('active', idx===i);
+      el.classList.toggle('done', idx<i);
+    });
+    await new Promise(r=>setTimeout(r, 280));
+  }
+
+  async function runQuantum(){
+    if (qRunning) return;
+    let n = parseInt(qbitsInput.value,10);
+    if (!Number.isFinite(n)||n<1||n>14){ qErr.style.display='block'; return; }
+    qErr.style.display='none';
+    if (!oracle) regenOracle();
+    qRunning=true; qRunBtn.disabled=true; newOracleBtn.disabled=true;
+    qQueriesEl.textContent='0'; qProbZeroEl.textContent='-'; qResultEl.textContent='-'; qDurationEl.textContent='-'; qNoteEl.textContent='';
+
+    const N = 1<<n;
+    const amp = new Float64Array(N);
+    amp[0]=1;
+
+    await setStep(0);
+    await setStep(1);
+    hadamardTransform(amp);
+    await setStep(2);
+    const t0 = performance.now();
+    applyOracle(amp, n, oracle);
+    await setStep(3);
+    hadamardTransform(amp);
+    const t1 = performance.now();
+    await setStep(4);
+
+    const durationMs = t1-t0;
+    const p0 = amp[0]*amp[0];
+    const isConstant = p0 > 0.999999;
+
+    qQueriesEl.textContent='1';
+    qProbZeroEl.textContent = (p0*100).toFixed(4) + ' %';
+    qResultEl.textContent = isConstant ? 'Constante' : 'Balanceada';
+    qDurationEl.textContent = durationMs.toFixed(3) + ' ms';
+
+    const worstCase = BigInt(2) ** BigInt(n-1) + 1n;
+    qNoteEl.textContent = 'Con una sola consulta al oráculo (en superposición) el algoritmo determina con certeza que f es ' + (isConstant?'constante':'balanceada') + '. El método clásico, en el peor caso, necesitaría hasta ' + abbreviateBig(worstCase) + ' consultas para n = ' + n + ' qubits.';
+
+    drawProbHistogram(amp, n);
+    drawQuantumCompareChart(n, worstCase);
+
+    qRunning=false; qRunBtn.disabled=false; newOracleBtn.disabled=false;
+  }
+
+  function drawProbHistogram(amp, n){
+    document.getElementById('qHistWrap').style.display='block';
+    const canvas = document.getElementById('qProbChart');
+    const ctx = canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height;
+    ctx.clearRect(0,0,W,H);
+    const N = amp.length;
+    const shown = Math.min(N, 64);
+    const padLeft=40, padRight=16, padTop=14, padBottom=28;
+    const chartW=W-padLeft-padRight, chartH=H-padTop-padBottom;
+    const barW = chartW/shown;
+    let maxP = 0;
+    for (let i=0;i<shown;i++) maxP = Math.max(maxP, amp[i]*amp[i]);
+    maxP = Math.max(maxP, 1/N, 0.001);
+
+    const gridColor = themeColor('--grid-line');
+    const axisColor = themeColor('--border');
+    const mutedColor = themeColor('--text-muted');
+    const secondaryColor = themeColor('--text-secondary');
+    const zeroColor = themeColor('--bar-green');
+    const barColor = themeColor('--bar-blue');
+
+    ctx.strokeStyle = axisColor;
+    ctx.beginPath(); ctx.moveTo(padLeft,padTop); ctx.lineTo(padLeft,padTop+chartH); ctx.lineTo(padLeft+chartW,padTop+chartH); ctx.stroke();
+
+    ctx.font='11px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+    ctx.fillStyle=mutedColor; ctx.textAlign='right';
+    [0, maxP/2, maxP].forEach(v=>{
+      const y = padTop+chartH-(v/maxP)*chartH;
+      ctx.fillText(v.toFixed(3), padLeft-6, y+3);
+      ctx.strokeStyle=gridColor; ctx.beginPath(); ctx.moveTo(padLeft,y); ctx.lineTo(padLeft+chartW,y); ctx.stroke();
+    });
+
+    for (let i=0;i<shown;i++){
+      const p = amp[i]*amp[i];
+      const h = (p/maxP)*chartH;
+      ctx.fillStyle = i===0 ? zeroColor : barColor;
+      ctx.fillRect(padLeft + i*barW + 1, padTop+chartH-h, Math.max(barW-2,1), h);
+    }
+
+    ctx.fillStyle=secondaryColor; ctx.textAlign='center';
+    ctx.fillText('Estados |x⟩ = 0 … ' + (shown-1) + (N>shown ? ' (de ' + N + ' totales)' : ''), padLeft+chartW/2, padTop+chartH+20);
+  }
+
+  function drawQuantumCompareChart(n, worstCase){
+    document.getElementById('qCompareWrap').style.display='block';
+    const canvas = document.getElementById('qCompareChart');
+    const ctx = canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height;
+    ctx.clearRect(0,0,W,H);
+    const labelColor=themeColor('--text-secondary'), valueColor=themeColor('--text-primary');
+    const bars=[
+      {label:'Deutsch-Jozsa (cuántico)', valueLabel:'1', logv:Math.log10(2), color:themeColor('--bar-green')},
+      {label:'Clásico (peor caso)', valueLabel:abbreviateBig(worstCase), logv:log10BigInt(worstCase+1n), color:themeColor('--bar-red')}
+    ];
+    const maxLog=Math.max(...bars.map(b=>b.logv),0.001);
+    const padLeft=170, padRight=20, padTop=14, padBottom=14;
+    const chartW=W-padLeft-padRight, chartH=H-padTop-padBottom;
+    const barHeight=30;
+    const gap=(chartH-bars.length*barHeight)/(bars.length+1);
+    ctx.font='12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+    ctx.textBaseline='middle';
+    bars.forEach((b,i)=>{
+      const y=padTop+gap*(i+1)+barHeight*i;
+      const w=Math.max((b.logv/maxLog)*chartW,4);
+      ctx.fillStyle=labelColor; ctx.textAlign='right'; ctx.fillText(b.label, padLeft-12, y+barHeight/2);
+      ctx.fillStyle=b.color; ctx.fillRect(padLeft,y,w,barHeight);
+      ctx.fillStyle=valueColor; ctx.textAlign='left'; ctx.fillText(b.valueLabel, padLeft+w+8, y+barHeight/2);
+    });
+  }
+
+  newOracleBtn.addEventListener('click', regenOracle);
+  qRunBtn.addEventListener('click', runQuantum);
+  oracleTypeSel.addEventListener('change', regenOracle);
+  qbitsInput.addEventListener('change', regenOracle);
+
+  regenOracle();
+})();
 </script>
 
 </body>

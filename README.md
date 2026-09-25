@@ -1,26 +1,22 @@
-# Método Clásico: Evaluación de f(x)
+Método Clásico y Cuántico de Deutsch-Jozsa
 
-Proyecto académico que muestra de forma interactiva cómo el método clásico evalúa una cadena de bits, contando los bits en `1` y convirtiendo el resultado a decimal.
+Proyecto académico interactivo que compara la eficiencia entre la evaluación clásica de funciones booleanas y el algoritmo cuántico de Deutsch-Jozsa.
 
-## Funcionalidades
+Funcionalidades
+Parte Clásica: Evaluación de cadenas de hasta 4096 bits, conteo de bits en 1, conversión a decimal (BigInt), repeticiones múltiples con patrones aleatorios y medición de tiempos de ejecución.   
 
-* Generación de cadenas aleatorias de hasta 4096 bits.
-* Evaluación de cadenas binarias.
-* Conteo de bits en `1`.
-* Conversión a decimal.
-* Medición del tiempo de ejecución.
-* Comparación de consultas entre el método clásico y Deutsch-Jozsa.
-* Ejecución de múltiples repeticiones y visualización de resultados.
+Parte Cuántica: Simulación del circuito cuántico (hasta 14 qubits) con oráculos personalizables (constantes y balanceadas), transformación de Hadamard y cálculo del estado de superposición. 
 
-## Tecnologías
+Visualización: Gráficos dinámicos en HTML5 Canvas con histogramas de probabilidad, diagramas de dispersión y comparativas de consultas necesarias.  
 
-* HTML5
-* CSS3
-* JavaScript
-* Canvas API
+Interfaz: Diseño adaptativo con soporte nativo para modo oscuro y claro.  
 
-## Ejecución
+Tecnologías
+HTML5
+CSS3
+JavaScript(ES6+)
+Canvas API
 
-Abrir el archivo `index.html` en cualquier navegador web.
+Ejecución
 
-El proyecto está desarrollado con fines educativos para comprender la diferencia entre el enfoque clásico y el algoritmo Deutsch-Jozsa.
+Guardar el código en un archivo .html  y abrirlo directamente en cualquier navegador web moderno.   

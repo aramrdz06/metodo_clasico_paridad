@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Método clásico: evaluación de f(x)</title>
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --card: #ffffff;
+    --border: #ddd9cf;
+    --border-accent: #185fa5;
+    --text-primary: #1f1e1c;
+    --text-secondary: #5f5e5a;
+    --text-muted: #888780;
+    --bg-accent: #e6f1fb;
+    --text-accent: #0c447c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+  }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 0.25rem; }
+  p.subtitle { font-size: 14px; color: var(--text-secondary); margin: 0 0 1.75rem; }
+  .controls { display: flex; gap: 8px; align-items: center; margin: 0 0 0.6rem; flex-wrap: wrap; }
+  label { font-size: 14px; color: var(--text-secondary); }
+  input[type="text"] {
+    width: 100%;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-primary);
+    word-break: break-all;
+  }
+  input[type="number"] {
+    width: 90px;
+    font-size: 14px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-primary);
+  }
+  button {
+    font-size: 14px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  button:hover { background: #f0eee8; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #err { font-size: 13px; color: #a32d2d; display: none; margin: 6px 0 12px; }
+  .bitsRow { margin: 0 0 1rem; }
+  #track { display: flex; gap: 5px; margin: 0 0 1.5rem; flex-wrap: wrap; }
+  .bitbox {
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Courier New", monospace; font-size: 12px;
+    border-radius: 6px; border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .bitbox.active { border-color: var(--border-accent); background: var(--bg-accent); color: var(--text-accent); font-weight: 600; }
+  .bitbox.past { background: #f0eee8; color: var(--text-secondary); }
+  .bitbox.ellipsis { border: none; color: var(--text-muted); width: auto; padding: 0 4px; }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+  .stat-label { font-size: 13px; color: var(--text-secondary); margin: 0 0 4px; }
+  .stat-value { font-size: 24px; font-weight: 600; margin: 0; word-break: break-all; }
+  .stat-value.decimal { font-size: 14px; font-family: "Courier New", monospace; line-height: 1.5; font-weight: 500; }
+  #note { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.5rem; }
+  .chart-title { font-size: 13px; color: var(--text-secondary); margin: 0 0 8px; font-weight: 600; }
+  canvas { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; display: block; }
+  #logWrap { margin-top: 1.75rem; }
+  #logList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  #logList li {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; font-size: 12.5px; color: var(--text-secondary);
+    display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  }
+  #logList li span.time { color: var(--text-primary); font-weight: 600; font-family: "Courier New", monospace; }
+  #logList li span.dur { color: var(--text-accent); }
+</style>
+</head>
+<body>
+
+<h1>Método clásico: evaluación de f(x)</h1>
+<p class="subtitle">Cuenta bits en 1 sobre una cadena de hasta 4096 bits, muestra el resultado en decimal y compara con Deutsch-Jozsa.</p>
+
+<div class="controls">
+  <label for="nbits">n (bits)</label>
+  <input id="nbits" type="number" min="1" max="4096" value="1128" />
+  <button id="randomBtn">Generar aleatoria</button>
+  <button id="runBtn">Evaluar f(x)</button>
+</div>
+<div class="controls">
+  <label for="reps">Repeticiones</label>
+  <input id="reps" type="number" min="1" max="500" value="10" />
+  <button id="repsBtn">Ejecutar repeticiones (patrones distintos)</button>
+</div>
+<div class="bitsRow">
+  <label for="bits">Cadena x</label>
+  <input id="bits" type="text" maxlength="4096" />
+</div>
+<div id="err">Usa solo 0 y 1, entre 1 y 4096 bits.</div>
+
+<div id="track"></div>
+
+<div class="stats">
+  <div class="stat-card">
+    <p class="stat-label">Consultas realizadas</p>
+    <p class="stat-value" id="queries">0</p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Contador (bits en 1)</p>
+    <p class="stat-value" id="counter">0</p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Resultado (decimal)</p>
+    <p class="stat-value decimal" id="result">-</p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Tiempo de cálculo</p>
+    <p class="stat-value" id="duration">-</p>
+  </div>
+</div>
+
+<div id="note"></div>
+
+<div id="chartWrap" style="display:none;">
+  <p class="chart-title">Comparación de consultas necesarias</p>
+  <canvas id="barChart" width="660" height="190"></canvas>
+</div>
+
+<div id="repChartWrap" style="display:none; margin-top:1.5rem;">
+  <p class="chart-title">Resultados por repetición (diagrama de dispersión, contador de bits en 1)</p>
+  <canvas id="repChart" width="660" height="220"></canvas>
+</div>
+
+<div id="logWrap" style="display:none;">
+  <p class="chart-title">Registro de tiempo de evaluaciones</p>
+  <ul id="logList"></ul>
+</div>
+
+<script>
+const nbitsInput = document.getElementById('nbits');
+const bitsInput = document.getElementById('bits');
+const track = document.getElementById('track');
+const queriesEl = document.getElementById('queries');
+const counterEl = document.getElementById('counter');
+const resultEl = document.getElementById('result');
+const durationEl = document.getElementById('duration');
+const noteEl = document.getElementById('note');
+const errEl = document.getElementById('err');
+const runBtn = document.getElementById('runBtn');
+const repsInput = document.getElementById('reps');
+const repsBtn = document.getElementById('repsBtn');
+const logList = document.getElementById('logList');
+const logWrap = document.getElementById('logWrap');
+let running = false;
+
+const MAX_TRACK_BOXES = 80; // por encima de esto se muestra una vista condensada
+
+function randomBitsOfLength(n) {
+  let s = '';
+  for (let i = 0; i < n; i++) s += Math.random() < 0.5 ? '0' : '1';
+  return s;
+}
+
+function renderTrack(bits, activeIndex) {
+  track.innerHTML = '';
+  if (bits.length <= MAX_TRACK_BOXES) {
+    for (let i = 0; i < bits.length; i++) {
+      const box = document.createElement('div');
+      box.textContent = bits[i];
+      box.className = 'bitbox' + (i === activeIndex ? ' active' : (i > activeIndex ? ' past' : ''));
+      track.appendChild(box);
+    }
+    return;
+  }
+  // Vista condensada para cadenas largas: primeros y últimos bits
+  const half = 20;
+  const makeBox = (ch, cls) => {
+    const box = document.createElement('div');
+    box.textContent = ch;
+    box.className = 'bitbox' + (cls ? ' ' + cls : '');
+    return box;
+  };
+  for (let i = 0; i < half; i++) track.appendChild(makeBox(bits[i], i > activeIndex ? 'past' : (i === activeIndex ? 'active' : '')));
+  const dots = document.createElement('div');
+  dots.textContent = '···';
+  dots.className = 'bitbox ellipsis';
+  track.appendChild(dots);
+  for (let i = bits.length - half; i < bits.length; i++) track.appendChild(makeBox(bits[i], i > activeIndex ? 'past' : (i === activeIndex ? 'active' : '')));
+}
+
+function abbreviateBig(bi) {
+  const s = bi.toString();
+  if (s.length <= 24) return s;
+  return s.slice(0, 12) + '…' + s.slice(-4) + '  (' + s.length + ' dígitos)';
+}
+
+function log10BigInt(bi) {
+  if (bi <= 0n) return 0;
+  const s = bi.toString();
+  const digits = s.length;
+  const leadCount = Math.min(15, digits);
+  const leading = parseFloat(s.slice(0, leadCount));
+  return (digits - leadCount) + Math.log10(leading);
+}
+
+async function run() {
+  if (running) return;
+  const raw = bitsInput.value.trim();
+  if (!/^[01]+$/.test(raw) || raw.length < 1 || raw.length > 4096) {
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  running = true;
+  runBtn.disabled = true;
+  counterEl.textContent = '0';
+  queriesEl.textContent = '0';
+  resultEl.textContent = '-';
+  durationEl.textContent = '-';
+  noteEl.textContent = '';
+
+  const animate = raw.length <= MAX_TRACK_BOXES;
+
+  if (animate) {
+    let counter = 0;
+    for (let i = raw.length - 1; i >= 0; i--) {
+      renderTrack(raw, i);
+      await new Promise(r => setTimeout(r, Math.max(260 / Math.max(1, raw.length / 20), 15)));
+      if (raw[i] === '1') counter++;
+      queriesEl.textContent = String(raw.length - i);
+      counterEl.textContent = String(counter);
+    }
+    renderTrack(raw, -1);
+  } else {
+    renderTrack(raw, raw.length);
+    await new Promise(r => setTimeout(r, 350)); // breve indicación visual de "procesando"
+  }
+
+  // --- Cómputo real (esto es lo que se cronometra) ---
+  const t0 = performance.now();
+  let counter = 0;
+  for (let i = 0; i < raw.length; i++) if (raw[i] === '1') counter++;
+  const decimalValue = BigInt('0b' + raw);
+  const worstCase = BigInt(2) ** BigInt(raw.length - 1) + 1n;
+  const t1 = performance.now();
+  const durationMs = t1 - t0;
+  // ----------------------------------------------------
+
+  queriesEl.textContent = String(raw.length);
+  counterEl.textContent = String(counter);
+  resultEl.textContent = abbreviateBig(decimalValue);
+  resultEl.title = decimalValue.toString();
+  durationEl.textContent = durationMs.toFixed(3) + ' ms';
+
+  noteEl.textContent = 'Se evaluó cada bit una vez: ' + raw.length + ' consultas en total. En el peor caso, el método clásico requeriría hasta ' + abbreviateBig(worstCase) + ' consultas para n = ' + raw.length + ' bits.';
+
+  drawBarChart(raw.length, worstCase);
+  addLogEntry(raw.length, decimalValue, durationMs, 'Manual');
+
+  running = false;
+  runBtn.disabled = false;
+}
+
+function addLogEntry(n, decimalValue, durationMs, tag) {
+  logWrap.style.display = 'block';
+  const li = document.createElement('li');
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-MX', { hour12: false }) + '.' + String(now.getMilliseconds()).padStart(3, '0');
+  li.innerHTML = '<span class="time">' + timeStr + '</span>' +
+    (tag ? '<span>' + tag + '</span>' : '') +
+    '<span>n = ' + n + ' bits</span>' +
+    '<span>resultado = ' + abbreviateBig(decimalValue) + '</span>' +
+    '<span class="dur">' + durationMs.toFixed(3) + ' ms</span>';
+  logList.insertBefore(li, logList.firstChild);
+  while (logList.children.length > 30) logList.removeChild(logList.lastChild);
+}
+
+function drawBarChart(actualQueries, worstCase) {
+  document.getElementById('chartWrap').style.display = 'block';
+  const canvas = document.getElementById('barChart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const bars = [
+    { label: 'Deutsch-Jozsa', valueLabel: '1', logv: Math.log10(2), color: '#1d9e75' },
+    { label: 'Clásico (esta demo)', valueLabel: String(actualQueries), logv: Math.log10(actualQueries + 1), color: '#378add' },
+    { label: 'Clásico (peor caso)', valueLabel: abbreviateBig(worstCase), logv: log10BigInt(worstCase + 1n), color: '#e24b4a' }
+  ];
+
+  const maxLog = Math.max(...bars.map(b => b.logv), 0.001);
+  const padLeft = 160;
+  const padRight = 20;
+  const padTop = 16;
+  const padBottom = 16;
+  const chartW = W - padLeft - padRight;
+  const chartH = H - padTop - padBottom;
+  const barHeight = 30;
+  const gap = (chartH - bars.length * barHeight) / (bars.length + 1);
+
+  ctx.font = '12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+  ctx.textBaseline = 'middle';
+
+  bars.forEach((b, i) => {
+    const y = padTop + gap * (i + 1) + barHeight * i;
+    const w = Math.max((b.logv / maxLog) * chartW, 4);
+
+    ctx.fillStyle = '#5f5e5a';
+    ctx.textAlign = 'right';
+    ctx.fillText(b.label, padLeft - 12, y + barHeight / 2);
+
+    ctx.fillStyle = b.color;
+    const radius = 6;
+    ctx.beginPath();
+    ctx.moveTo(padLeft, y);
+    ctx.lineTo(padLeft + w - radius, y);
+    ctx.quadraticCurveTo(padLeft + w, y, padLeft + w, y + radius);
+    ctx.lineTo(padLeft + w, y + barHeight - radius);
+    ctx.quadraticCurveTo(padLeft + w, y + barHeight, padLeft + w - radius, y + barHeight);
+    ctx.lineTo(padLeft, y + barHeight);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#1f1e1c';
+    ctx.textAlign = 'left';
+    ctx.fillText(b.valueLabel, padLeft + w + 8, y + barHeight / 2);
+  });
+}
+
+async function runRepetitions() {
+  if (running) return;
+  let n = parseInt(nbitsInput.value, 10);
+  if (!Number.isFinite(n) || n < 1) n = 1;
+  if (n > 4096) n = 4096;
+  let reps = parseInt(repsInput.value, 10);
+  if (!Number.isFinite(reps) || reps < 1) reps = 1;
+  if (reps > 500) reps = 500;
+
+  running = true;
+  runBtn.disabled = true;
+  repsBtn.disabled = true;
+  noteEl.textContent = 'Ejecutando ' + reps + ' repeticiones con patrones aleatorios distintos (n = ' + n + ' bits)...';
+
+  const results = [];
+  let lastRaw = '';
+  for (let r = 1; r <= reps; r++) {
+    const raw = randomBitsOfLength(n);
+    lastRaw = raw;
+
+    const t0 = performance.now();
+    let counter = 0;
+    for (let i = 0; i < raw.length; i++) if (raw[i] === '1') counter++;
+    const decimalValue = BigInt('0b' + raw);
+    const t1 = performance.now();
+    const durationMs = t1 - t0;
+
+    results.push({ rep: r, counter, decimalValue, durationMs });
+    addLogEntry(n, decimalValue, durationMs, 'Rep ' + r + '/' + reps);
+
+    // Refresca la gráfica progresivamente y cede el hilo cada pocas iteraciones
+    if (r % Math.max(1, Math.floor(reps / 20)) === 0 || r === reps) {
+      drawRepChart(results, n);
+      await new Promise(res => setTimeout(res, 0));
+    }
+  }
+
+  // Deja la última cadena y sus stats visibles arriba también
+  const last = results[results.length - 1];
+  bitsInput.value = lastRaw;
+  renderTrack(lastRaw, -1);
+  queriesEl.textContent = String(n);
+  counterEl.textContent = String(last.counter);
+  resultEl.textContent = abbreviateBig(last.decimalValue);
+  resultEl.title = last.decimalValue.toString();
+  durationEl.textContent = last.durationMs.toFixed(3) + ' ms';
+
+  const avgCounter = results.reduce((a, b) => a + b.counter, 0) / results.length;
+  const avgDur = results.reduce((a, b) => a + b.durationMs, 0) / results.length;
+  noteEl.textContent = 'Se ejecutaron ' + reps + ' repeticiones con n = ' + n + ' bits, cada una con un patrón aleatorio distinto. Promedio de bits en 1: ' + avgCounter.toFixed(1) + ' de ' + n + '. Tiempo de cálculo promedio: ' + avgDur.toFixed(3) + ' ms.';
+
+  running = false;
+  runBtn.disabled = false;
+  repsBtn.disabled = false;
+}
+
+function drawRepChart(results, n) {
+  document.getElementById('repChartWrap').style.display = 'block';
+  const canvas = document.getElementById('repChart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const padLeft = 46, padRight = 16, padTop = 16, padBottom = 30;
+  const chartW = W - padLeft - padRight;
+  const chartH = H - padTop - padBottom;
+
+  const maxVal = n;
+  const yFor = v => padTop + chartH - (v / maxVal) * chartH;
+
+  ctx.strokeStyle = '#ddd9cf';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padLeft, padTop);
+  ctx.lineTo(padLeft, padTop + chartH);
+  ctx.lineTo(padLeft + chartW, padTop + chartH);
+  ctx.stroke();
+
+  ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = '#888780';
+  ctx.textAlign = 'right';
+  [0, Math.round(maxVal / 2), maxVal].forEach(t => {
+    const y = yFor(t);
+    ctx.fillText(String(t), padLeft - 6, y + 3);
+    ctx.strokeStyle = '#eeece5';
+    ctx.beginPath();
+    ctx.moveTo(padLeft, y);
+    ctx.lineTo(padLeft + chartW, y);
+    ctx.stroke();
+  });
+
+  const count = results.length;
+  const pointRadius = count > 150 ? 2 : (count > 60 ? 2.5 : 3.5);
+
+  results.forEach((r, i) => {
+    const x = padLeft + (count === 1 ? chartW / 2 : (i / (count - 1)) * chartW);
+    const y = yFor(r.counter);
+    ctx.fillStyle = '#378add';
+    ctx.beginPath();
+    ctx.arc(x, y, pointRadius, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Línea de referencia: valor esperado (n/2)
+  const expected = n / 2;
+  const ey = yFor(expected);
+  ctx.strokeStyle = '#e24b4a';
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(padLeft, ey);
+  ctx.lineTo(padLeft + chartW, ey);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#e24b4a';
+  ctx.textAlign = 'left';
+  ctx.fillText('esperado n/2 = ' + expected.toFixed(0), padLeft + 4, ey - 5);
+
+  ctx.fillStyle = '#5f5e5a';
+  ctx.textAlign = 'center';
+  ctx.fillText('Repetición (1 → ' + count + ')', padLeft + chartW / 2, padTop + chartH + 20);
+}
+
+runBtn.addEventListener('click', run);
+repsBtn.addEventListener('click', runRepetitions);
+document.getElementById('randomBtn').addEventListener('click', () => {
+  let n = parseInt(nbitsInput.value, 10);
+  if (!Number.isFinite(n) || n < 1) n = 1;
+  if (n > 4096) n = 4096;
+  nbitsInput.value = String(n);
+  bitsInput.value = randomBitsOfLength(n);
+  errEl.style.display = 'none';
+  renderTrack(bitsInput.value, bitsInput.value.length);
+});
+
+// Estado inicial: cadena aleatoria de 1128 bits
+bitsInput.value = randomBitsOfLength(parseInt(nbitsInput.value, 10));
+renderTrack(bitsInput.value, bitsInput.value.length);
+</script>
+
+</body>
+</html>
